@@ -1,1 +1,628 @@
+<!DOCTYPE html>
 
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arbeitsauftrag – Schleusenbetrieb</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+:root {
+–bg: #0f1117;
+–surface: #181c27;
+–border: #2a3040;
+–accent: #e8a020;
+–accent2: #3a7bd5;
+–text: #d4dae8;
+–muted: #5a6478;
+–danger: #c0392b;
+–success: #27ae60;
+–mono: ‘IBM Plex Mono’, monospace;
+–sans: ‘IBM Plex Sans’, sans-serif;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: var(–sans);
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+}
+
+/* ── Header ── */
+header {
+background: var(–surface);
+border-bottom: 2px solid var(–accent);
+padding: 18px 32px;
+display: flex;
+align-items: center;
+gap: 16px;
+}
+.header-icon {
+width: 42px; height: 42px;
+background: var(–accent);
+border-radius: 8px;
+display: flex; align-items: center; justify-content: center;
+font-size: 22px;
+}
+header h1 {
+font-family: var(–mono);
+font-size: 1.1rem;
+letter-spacing: 0.08em;
+color: var(–accent);
+text-transform: uppercase;
+}
+header p { font-size: 0.78rem; color: var(–muted); margin-top: 2px; }
+
+/* ── Main layout ── */
+main {
+flex: 1;
+display: grid;
+grid-template-columns: 280px 1fr;
+gap: 0;
+height: calc(100vh - 80px);
+}
+
+/* ── Sidebar ── */
+aside {
+background: var(–surface);
+border-right: 1px solid var(–border);
+overflow-y: auto;
+padding: 24px 16px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+}
+
+.sidebar-section h2 {
+font-family: var(–mono);
+font-size: 0.65rem;
+letter-spacing: 0.15em;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 10px;
+padding-left: 4px;
+}
+
+/* Schleuse selector */
+.schleuse-grid {
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.schleuse-btn {
+background: transparent;
+border: 1px solid var(–border);
+border-radius: 8px;
+color: var(–text);
+font-family: var(–sans);
+font-size: 0.82rem;
+padding: 10px 14px;
+text-align: left;
+cursor: pointer;
+transition: all 0.15s;
+display: flex;
+flex-direction: column;
+gap: 2px;
+}
+.schleuse-btn:hover { border-color: var(–accent2); background: rgba(58,123,213,0.08); }
+.schleuse-btn.active {
+border-color: var(–accent);
+background: rgba(232,160,32,0.12);
+color: var(–accent);
+}
+.schleuse-btn .km {
+font-family: var(–mono);
+font-size: 0.68rem;
+color: var(–muted);
+}
+.schleuse-btn.active .km { color: var(–accent); opacity: 0.7; }
+
+/* Bauteil list */
+.bauteil-list {
+display: flex;
+flex-direction: column;
+gap: 5px;
+}
+.bauteil-btn {
+background: transparent;
+border: 1px solid var(–border);
+border-radius: 6px;
+color: var(–text);
+font-family: var(–sans);
+font-size: 0.82rem;
+padding: 9px 14px;
+text-align: left;
+cursor: pointer;
+transition: all 0.15s;
+}
+.bauteil-btn:hover { border-color: var(–accent2); background: rgba(58,123,213,0.08); }
+.bauteil-btn.active {
+border-color: var(–accent);
+background: rgba(232,160,32,0.12);
+color: var(–accent);
+font-weight: 600;
+}
+
+/* ── Preview ── */
+.preview-area {
+background: #13161f;
+overflow-y: auto;
+padding: 32px;
+display: flex;
+flex-direction: column;
+gap: 24px;
+}
+
+.preview-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 12px;
+}
+.preview-header h2 {
+font-family: var(–mono);
+font-size: 0.75rem;
+letter-spacing: 0.12em;
+color: var(–muted);
+text-transform: uppercase;
+}
+
+.btn-print {
+background: var(–accent);
+color: #0f1117;
+border: none;
+border-radius: 7px;
+padding: 10px 22px;
+font-family: var(–mono);
+font-size: 0.78rem;
+font-weight: 600;
+letter-spacing: 0.06em;
+text-transform: uppercase;
+cursor: pointer;
+transition: opacity 0.15s, transform 0.1s;
+display: flex; align-items: center; gap: 8px;
+}
+.btn-print:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-print:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+.spinner {
+width: 14px; height: 14px;
+border: 2px solid rgba(0,0,0,0.25);
+border-top-color: #0f1117;
+border-radius: 50%;
+animation: spin 0.7s linear infinite;
+display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── The form card ── */
+.form-card {
+background: #fff;
+color: #111;
+border-radius: 10px;
+padding: 28px 32px;
+font-family: Arial, Helvetica, sans-serif;
+font-size: 11px;
+max-width: 860px;
+box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+.form-card .title-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-bottom: 2px solid #111;
+padding-bottom: 6px;
+margin-bottom: 14px;
+}
+.form-card .title-row strong { font-size: 14px; }
+.form-card .nr-box {
+border: 1px solid #111;
+width: 140px;
+height: 22px;
+font-size: 11px;
+display: flex; align-items: center; padding: 0 6px;
+}
+
+.section {
+border: 1px solid #aaa;
+border-radius: 4px;
+padding: 12px 14px;
+margin-bottom: 12px;
+}
+.section-title {
+font-weight: bold;
+font-size: 12px;
+margin-bottom: 8px;
+display: flex;
+align-items: baseline;
+gap: 20px;
+}
+.section-title .objekt-val {
+font-size: 13px;
+font-weight: bold;
+color: #c0392b;
+border-bottom: 1px solid #c0392b;
+padding-bottom: 1px;
+min-width: 180px;
+}
+
+.row { display: flex; gap: 16px; margin-bottom: 8px; align-items: flex-end; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 2px; }
+.field label { font-size: 9px; color: #555; }
+.field .val {
+border-bottom: 1px solid #888;
+min-width: 90px;
+height: 18px;
+font-size: 11px;
+padding: 0 2px;
+display: flex; align-items: center;
+}
+.field .val.highlight {
+border-bottom: 2px solid #c0392b;
+color: #c0392b;
+font-weight: 600;
+}
+.field .val.wide { min-width: 240px; }
+.field .val.full { min-width: 540px; }
+
+.befund-box {
+border: 1px solid #888;
+border-radius: 3px;
+min-height: 80px;
+padding: 8px;
+font-size: 12px;
+line-height: 1.6;
+color: #c0392b;
+font-weight: 600;
+margin-top: 6px;
+background: #fff9f9;
+}
+
+.priority-row {
+display: flex;
+gap: 18px;
+align-items: center;
+margin-top: 4px;
+}
+.prio-item {
+display: flex; align-items: center; gap: 5px; font-size: 10px;
+}
+.checkbox {
+width: 13px; height: 13px;
+border: 1px solid #555;
+border-radius: 2px;
+display: flex; align-items: center; justify-content: center;
+font-size: 10px;
+}
+.checkbox.checked { background: #111; color: #fff; }
+
+.sign-row {
+display: flex;
+gap: 30px;
+margin-top: 10px;
+border-top: 1px solid #ccc;
+padding-top: 8px;
+}
+
+.empty-state {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+flex: 1;
+gap: 14px;
+color: var(–muted);
+min-height: 300px;
+}
+.empty-state .icon { font-size: 48px; opacity: 0.4; }
+.empty-state p { font-family: var(–mono); font-size: 0.78rem; letter-spacing: 0.08em; }
+
+/* ── Print styles ── */
+@media print {
+body { background: #fff; }
+header, aside, .preview-header { display: none !important; }
+main { display: block; height: auto; }
+.preview-area { padding: 0; background: #fff; }
+.form-card {
+box-shadow: none;
+border-radius: 0;
+max-width: 100%;
+padding: 10mm;
+}
+.empty-state { display: none; }
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="header-icon">⚙️</div>
+  <div>
+    <h1>Arbeitsauftrag · Schleusenbetrieb</h1>
+    <p>Schichtleiter: Erik Wilde &nbsp;|&nbsp; Priorität: 1. Sofortmaßnahme</p>
+  </div>
+</header>
+
+<main>
+  <!-- Sidebar -->
+  <aside>
+    <div class="sidebar-section">
+      <h2>📍 Baustelle auswählen</h2>
+      <div class="schleuse-grid" id="schleuseGrid"></div>
+    </div>
+    <div class="sidebar-section">
+      <h2>🔧 Bauteil auswählen</h2>
+      <div class="bauteil-list" id="bauteilList"></div>
+    </div>
+  </aside>
+
+  <!-- Preview -->
+
+  <div class="preview-area" id="previewArea">
+    <div class="preview-header">
+      <h2>Vorschau Arbeitsauftrag</h2>
+      <button class="btn-print" id="printBtn" onclick="downloadPDF()" disabled>
+        <span class="spinner" id="spinner"></span>
+        <span id="btnLabel">⬇ PDF Herunterladen</span>
+      </button>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <div class="icon">📋</div>
+      <p>Bitte Baustelle und Bauteil auswählen</p>
+    </div>
+    <div id="formOutput" style="display:none;"></div>
+  </div>
+</main>
+
+<script>
+  const schleussen = [
+    { name: "Schleuse Freudenberg", km: "km 134,000", objekt: "Schleuse Freudenberg" },
+    { name: "Schleuse Faulbach",    km: "km 147,000", objekt: "Schleuse Faulbach" },
+    { name: "Schleuse Eichel",      km: "km 160,500", objekt: "Schleuse Eichel" },
+    { name: "Schleuse Lengfurt",    km: "km 174,500", objekt: "Schleuse Lengfurt" },
+  ];
+
+  const bauteile = [
+    "TMR", "Schütz", "Lautsprecher Kammer", "Lautsprecher UVH", "Lautsprecher OVH",
+    "Zufahrtstor", "Kammerbeleuchtung", "Beleuchtung UVH", "Beleuchtung OVH",
+    "Stoßschutz", "Torpegeldifferenz OH", "Torpegeldifferenz UH"
+  ];
+
+  let selected = { schleuse: null, bauteil: null };
+
+  // Build sidebar
+  const sg = document.getElementById('schleuseGrid');
+  schleussen.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'schleuse-btn';
+    btn.innerHTML = `<span>${s.name}</span><span class="km">${s.km}</span>`;
+    btn.onclick = () => { selected.schleuse = s; setActive(sg, btn); render(); };
+    sg.appendChild(btn);
+  });
+
+  const bl = document.getElementById('bauteilList');
+  bauteile.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'bauteil-btn';
+    btn.textContent = b;
+    btn.onclick = () => { selected.bauteil = b; setActive(bl, btn); render(); };
+    bl.appendChild(btn);
+  });
+
+  function setActive(container, activeBtn) {
+    container.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    activeBtn.classList.add('active');
+  }
+
+  function today() {
+    return new Date().toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' });
+  }
+  function todayShort() {
+    const d = new Date();
+    return d.toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit' });
+  }
+  function nowTime() {
+    return new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function downloadPDF() {
+    const btn = document.getElementById('printBtn');
+    const spinner = document.getElementById('spinner');
+    const label = document.getElementById('btnLabel');
+    const element = document.getElementById('formOutput');
+
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    label.textContent = 'Wird erstellt...';
+
+    const { schleuse, bauteil } = selected;
+    const filename = `Arbeitsauftrag_${schleuse.name.replace(/\s/g,'_')}_${bauteil.replace(/\s/g,'_')}.pdf`;
+
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = '⬇ PDF Herunterladen';
+    });
+  }
+
+  function render() {
+    const { schleuse, bauteil } = selected;
+    const empty = document.getElementById('emptyState');
+    const out = document.getElementById('formOutput');
+    const printBtn = document.getElementById('printBtn');
+
+    if (!schleuse || !bauteil) {
+      empty.style.display = 'flex';
+      out.style.display = 'none';
+      printBtn.disabled = true;
+      return;
+    }
+
+    empty.style.display = 'none';
+    out.style.display = 'block';
+    printBtn.disabled = false;
+
+    const befund = `Ausfall des ${bauteil}, bitte um Behebung.`;
+
+    out.innerHTML = `
+    <div class="form-card">
+      <div class="title-row">
+        <strong>Arbeitsauftrag Nr.</strong>
+        <div class="nr-box"></div>
+      </div>
+
+      <!-- Sektion 1 -->
+      <div class="section">
+        <div class="section-title">
+          1.) Feststellung &nbsp;&nbsp; <span style="font-size:10px;font-weight:normal;">Objekt:</span>
+          <span class="objekt-val">${schleuse.objekt}</span>
+        </div>
+
+        <div class="row">
+          <div class="field"><label>Kostenstelle</label><div class="val" style="min-width:120px;"></div></div>
+          <div class="field"><label>Objekt/Fahrzeug</label><div class="val highlight" style="min-width:140px;">${schleuse.objekt}</div></div>
+          <div class="field"><label>Wasserstraße</label><div class="val">2910</div></div>
+          <div class="field"><label>km/m</label><div class="val highlight">${schleuse.km}</div></div>
+          <div class="field"><label>Organisationseinh.</label><div class="val" style="min-width:110px;"></div></div>
+          <div class="field"><label>Kostenart</label><div class="val"></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Kostenträger</label><div class="val">3110</div></div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:1;"><label>Langtext</label><div class="val full">${befund}</div></div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <div class="field"><label>Feststellung am</label><div class="val highlight">${today()}</div></div>
+          <div class="field" style="margin-left:24px;">
+            <label>Priorität</label>
+            <div class="priority-row">
+              <div class="prio-item"><div class="checkbox checked">✓</div> 1. Sofortmaßnahme</div>
+              <div class="prio-item"><div class="checkbox"></div> 2. Veranlassung bei nächster Gelegenheit</div>
+              <div class="prio-item"><div class="checkbox"></div> 3. Innerhalb 4 Wo</div>
+              <div class="prio-item"><div class="checkbox"></div> 4. Bei nächster Arbeit</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px; gap:30px;">
+          <div class="prio-item"><div class="checkbox checked">✓</div> &nbsp;Ausfall</div>
+          <div class="prio-item"><div class="checkbox"></div> &nbsp;Störung</div>
+          <div class="prio-item"><div class="checkbox"></div> &nbsp;Schaden</div>
+        </div>
+
+        <div><label style="font-size:9px;color:#555;">Befund:</label>
+          <div class="befund-box">${befund}</div>
+        </div>
+
+        <div class="sign-row">
+          <div class="field"><label>Name</label><div class="val highlight" style="min-width:160px;">Erik Wilde</div></div>
+          <div class="field"><label>Datum</label><div class="val highlight">${todayShort()}</div></div>
+          <div class="field"><label>Uhrzeit</label><div class="val">${nowTime()}</div></div>
+          <div style="display:flex;gap:16px;align-items:flex-end;margin-left:auto;">
+            <div class="prio-item"><div class="checkbox"></div> gemeldet</div>
+            <div class="prio-item"><div class="checkbox"></div> nicht gemeldet</div>
+            <div class="prio-item"><div class="checkbox"></div> in Bearbeitung</div>
+            <div class="prio-item"><div class="checkbox"></div> erledigt</div>
+            <div class="prio-item"><div class="checkbox"></div> Bereitschaft inform.</div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <div class="field"><label>an</label><div class="val" style="min-width:160px;"></div></div>
+          <div class="field"><label>von</label><div class="val" style="min-width:120px;"></div></div>
+          <div class="field"><label>am / Datum/Uhrzeit</label><div class="val" style="min-width:120px;"></div></div>
+          <div class="field"><label>E-Mail an</label><div class="val wide"></div></div>
+        </div>
+      </div>
+
+      <!-- Sektion 2 -->
+      <div class="section">
+        <div class="section-title">2.) Bearbeitung ABz</div>
+        <div class="row">
+          <div class="prio-item"><div class="checkbox"></div> Nichts zu veranlassen</div>
+          <div class="field" style="margin-left:20px;"><label>Priorität</label><div class="val"></div></div>
+          <div class="field"><label>ABz/Bhf/WSA</label><div class="val wide"></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Arbeitsvergabe/-anforderung an</label><div class="val wide"></div></div>
+          <div class="field"><label>am</label><div class="val"></div></div>
+          <div class="field"><label>Bearbeiter</label><div class="val wide"></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Aufgestellt</label><div class="val wide"></div></div>
+          <div class="prio-item" style="margin-left:20px;"><div class="checkbox"></div> Unternehmer</div>
+          <div class="field" style="margin-left:20px;"><label>Bestellschein Nr.</label><div class="val wide"></div></div>
+        </div>
+      </div>
+
+      <!-- Sektion 3 -->
+      <div class="section">
+        <div class="section-title">
+          3.) Durchführung &nbsp;
+          <span style="font-size:10px;font-weight:normal;">ABz/Bhf/WSA</span>
+          <div class="val" style="min-width:120px;display:inline-flex;"></div>
+          &nbsp; Priorität <div class="val" style="width:30px;display:inline-flex;"></div>
+        </div>
+        <div class="row">
+          <span>Maßnahme wird durch</span>
+          <div class="prio-item"><div class="checkbox"></div> Regiebetrieb</div>
+          <div class="prio-item"><div class="checkbox"></div> Unternehmer durchgeführt</div>
+          <div class="field" style="margin-left:10px;"><label>Auft. Nr.</label><div class="val"></div></div>
+          <div class="field"><label>Pos.</label><div class="val"></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Beginn der Durchführung</label><div class="val wide"></div></div>
+          <span style="margin-left:auto;">durch:</span>
+        </div>
+        <div class="row">
+          <div class="prio-item"><div class="checkbox"></div> sofort</div>
+          <div style="margin-left:auto;" class="prio-item"><div class="checkbox"></div> nach 4 Wochen</div>
+        </div>
+        <div class="sign-row">
+          <div class="field"><label>Aufgestellt</label><div class="val wide"></div></div>
+          <div class="field"><label>Datum</label><div class="val"></div></div>
+          <div class="field"><label>Kopie/Fax an 2.)</label><div class="val"></div></div>
+          <div class="field"><label>an 1.)</label><div class="val"></div></div>
+        </div>
+      </div>
+
+      <!-- Sektion 4 -->
+      <div class="section">
+        <div class="section-title">4.) Ausführung <span style="margin-left:auto;font-weight:normal;">erl.:</span></div>
+        <div class="row">
+          <div class="field"><label>Beginn</label><div class="val wide"></div></div>
+          <div class="field"><label>Ende</label><div class="val wide"></div></div>
+        </div>
+        <div class="sign-row">
+          <div class="field"><label>Aufgestellt</label><div class="val wide"></div></div>
+          <div class="field"><label>Datum</label><div class="val"></div></div>
+          <div class="field"><label>Kopie/Fax an 2.)</label><div class="val"></div></div>
+          <div class="field"><label>an 1.)</label><div class="val"></div></div>
+        </div>
+      </div>
+    </div>
+    `;
+  }
+</script>
+
+</body>
+</html>
